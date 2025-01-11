@@ -9,6 +9,7 @@ import aiohttp
 import json
 import subprocess
 import logging
+import asyncio
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -139,6 +140,52 @@ async def send_whatsapp_message(to: str, message: str):
         logger.error(f"Error sending WhatsApp message: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error sending WhatsApp message: {str(e)}")
 
+async def process_transcript(transcript: str) -> str:
+    """Process the transcript using OpenAI Assistant"""
+    try:
+        # Create a thread
+        thread = await openai.beta.threads.create()
+
+        # Add the transcript message to the thread
+        await openai.beta.threads.messages.create(
+            thread_id=thread.id,
+            role="user",
+            content=transcript
+        )
+
+        # Replace this with your Assistant ID from the OpenAI playground
+        ASSISTANT_ID = os.getenv("OPENAI_ASSISTANT_ID")
+        
+        # Run the assistant
+        run = await openai.beta.threads.runs.create(
+            thread_id=thread.id,
+            assistant_id=ASSISTANT_ID
+        )
+
+        # Wait for the completion
+        while True:
+            run_status = await openai.beta.threads.runs.retrieve(
+                thread_id=thread.id,
+                run_id=run.id
+            )
+            if run_status.status == 'completed':
+                break
+            await asyncio.sleep(1)  # Wait for 1 second before checking again
+
+        # Get the assistant's response
+        messages = await openai.beta.threads.messages.list(
+            thread_id=thread.id
+        )
+        
+        # Get the latest assistant response
+        assistant_response = messages.data[0].content[0].text.value
+        return assistant_response
+
+    except Exception as e:
+        logger.error(f"Transcript processing error: {str(e)}", exc_info=True)
+        # If processing fails, return original transcript
+        return transcript
+
 @app.post("/webhook")
 async def webhook_handler(request: Request):
     """Handle incoming WhatsApp messages"""
@@ -199,8 +246,13 @@ async def webhook_handler(request: Request):
         transcript = await transcribe_audio(converted_file)
         logger.debug(f"Transcription result: {transcript}")
         
-        # Send transcription back to user
-        response_message = f"Transcription: {transcript}"
+        # Process the transcript
+        logger.debug("Processing transcript with GPT...")
+        processed_transcript = await process_transcript(transcript)
+        logger.debug(f"Processed transcript: {processed_transcript}")
+        
+        # Send processed transcription back to user
+        response_message = f"Transcription: {processed_transcript}"
         logger.debug(f"Sending response: {response_message}")
         await send_whatsapp_message(from_number, response_message)
         
