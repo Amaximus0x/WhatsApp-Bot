@@ -271,5 +271,6 @@ async def webhook_handler(request: Request):
 
 if __name__ == "__main__":
     import uvicorn
-    port = int(os.environ.get("PORT", 80))
+    is_deployed = os.environ.get('REPLIT_DEPLOYMENT', False)
+    port = 80 if is_deployed else 3000
     uvicorn.run(app, host="0.0.0.0", port=port) 
