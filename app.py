@@ -269,7 +269,19 @@ async def webhook_handler(request: Request):
             content={"status": "error", "message": str(e)}
         )
 
+@app.get("/")
+async def root():
+    return {"status": "WhatsApp Voice Transcription Bot is running"}
+
 if __name__ == "__main__":
     import uvicorn
-    port = 3000
-    uvicorn.run(app, host="0.0.0.0", port=port) 
+    try:
+        port = int(os.getenv("PORT", "3000"))
+        uvicorn.run(
+            "app:app",
+            host="0.0.0.0",
+            port=port,
+            reload=True
+        )
+    except Exception as e:
+        print(f"Failed to start server: {e}") 
