@@ -1,11 +1,15 @@
 modules = ["python-3.12"]
-run = "uvicorn app:app --host 0.0.0.0 --port 3000"
+run = "python -m uvicorn app:app --host 0.0.0.0 --port 443"
 
 [nix]
 channel = "stable-24_05"
 
 [deployment]
-run = ["sh", "-c", "uvicorn app:app --host 0.0.0.0 --port 3000"]
+run = ["sh", "-c", "python -m uvicorn app:app --host 0.0.0.0 --port 80"]
+
+[[ports]]
+localPort = 443
+externalPort = 3000
 
 [[ports]]
 localPort = 3000
