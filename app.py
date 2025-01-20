@@ -275,13 +275,5 @@ async def root():
 
 if __name__ == "__main__":
     import uvicorn
-    try:
-        port = int(os.getenv("PORT", "8080"))
-        uvicorn.run(
-            app,
-            host="0.0.0.0",
-            port=port,
-            reload=False
-        )
-    except Exception as e:
-        print(f"Failed to start server: {e}") 
+    port = int(os.getenv("PORT", "8080"))
+    uvicorn.run(app, host="0.0.0.0", port=port) 
