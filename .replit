@@ -27,3 +27,7 @@ syntax = "python"
 
 [languages.python3.languageServer]
 start = ["pylsp"] 
+
+[[ports]]
+localPort = 8080
+externalPort = 80
